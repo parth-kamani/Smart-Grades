@@ -1,0 +1,130 @@
+<?php
+//fetch.php
+$connect = mysqli_connect("localhost", "root", "", "sg_db");
+$output = '';
+session_start();
+
+	if(!isset($_SESSION['log']))
+	{
+		header("location:index.php");
+	}
+	else
+	{
+		$log = $_SESSION['log'];
+		
+		$qry = "SELECT * FROM tbl_login WHERE email_id='$log'";
+		$result = mysqli_query($connect,$qry);
+		$value = mysqli_fetch_array($result);
+		
+		$id = $value['login_id'];
+if(isset($_POST["query"]))
+{
+	
+ $search = mysqli_real_escape_string($connect, $_POST["query"]);
+ $cor = $_GET['sel'];
+ $query = "
+  SELECT * FROM tbl_chapters
+  WHERE cor_id=".$cor." AND (ch_name LIKE '%".$search."%'
+  OR ch_num LIKE '%".$search."%'
+  OR ch_desc LIKE '%".$search."%') ORDER BY ch_num ASC
+ ";
+}
+else
+{
+	$cor = $_GET['sel'];
+ $query = "
+  SELECT * FROM tbl_chapters 
+  WHERE cor_id=".$cor." ORDER BY ch_num ASC
+ ";
+}
+$result = mysqli_query($connect, $query);
+if(mysqli_num_rows($result) > 0)
+{
+ $output .= '
+  <div class="table-responsive">
+   <table class="table table-hover">
+   <tr>
+    <th>ID</th>
+	<th>Number</th>
+				  <th>Name</th>
+				  <th>Description</th>
+                  <th>Status</th>
+				  <th>Action</th>
+   </tr>
+ ';
+	$seq=1;
+	$r=0;
+ while($row = mysqli_fetch_array($result))
+ {
+	 $u=$row['active'];
+						if($u==1)
+					{
+						$u1="Active";
+					}
+					else
+					{
+						$u1="Non-Active";
+					}
+					
+					$hj=strlen($row['ch_desc']);
+					//$bv="";
+					if($hj>25)
+					{
+						$bv=substr($row['ch_desc'],0,25);
+						$bv.="...";
+					}
+					else
+					{
+						$bv=$row['ch_desc'];
+					}
+  $output .= '
+   <tr>
+    <td>'.$seq.'</td>
+    <td>'.$row['ch_num'].'</td>
+	<td>'.$row['ch_name'].'</td>
+    <td>'.$bv.'</td>
+	<td>'.$u1.'</td>
+	<td>
+					<button type="button" class="btn btn-info btn-xs view_data1" data-toggle="modal" id="'.$row['ch_id'].'">VIEW</button>&nbsp;&nbsp;
+					
+				  <a class="btn btn-success btn-xs" href="editchap.php?id='.$row['ch_id'].'" 
+					onclick="return confirm("sure to edit?");">EDIT</a> &nbsp;&nbsp;
+				  <a class="btn btn-danger btn-xs" href="?del='.$row['ch_id'].'" 
+					onclick="return confirm("sure to delete?");">DELETE</a>
+					</td>
+   </tr>
+    
+
+  ';
+  $seq++;
+ }
+ 
+ echo $output;
+ $output.='
+ </table>
+ </div>
+ ';
+}
+else
+{
+$output.='
+<div class="table-responsive" >
+   <table class="table table-hover">
+   <tr>
+    <th>ID</th>
+	<th>Number</th>
+				  <th>Name</th>
+				  <th>Description</th>
+                  <th>Status</th>
+				  <th>Action</th>
+   </tr>
+<tr>
+<td colspan="6"><center><label>No Records</label></center></td>
+</tr>
+</table>
+</div>
+';
+echo $output;
+}
+	}
+?>
